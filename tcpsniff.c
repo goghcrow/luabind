@@ -11,7 +11,7 @@
 #include "sniff.h"
 #include "luabind.h"
 
-lua_State *L = NULL;
+static lua_State *L = NULL;
 
 static void l_message(const char *pname, const char *msg)
 {
@@ -45,20 +45,7 @@ void pkt_handler(void *ud,
 				 size_t payload_size)
 {
 	printf("%ld len %d, caplen %d \n", pkthdr->ts.tv_sec, pkthdr->len, pkthdr->caplen);
-
-	// L = luaL_newstate(); /* create state */
-	// assert(L);
-	// luaL_openlibs(L);
 	
-	// // 注册函数
-	// lbind_register(L, "sniffExit", sniffexit);
-
-	// // 加载文件并执行
-	// if (lbind_dofile(L, "tcpsniff.lua") != LUA_OK)
-	// {
-	// 	exit(1);
-	// }
-
 	struct vars *args = lbind_args(L);
 	// lbind_pushstring(args, "foobar");
 	lbind_pushlstring(args, (const char *)payload, payload_size);
@@ -67,14 +54,30 @@ void pkt_handler(void *ud,
 	// 返回值检查
 	// assert(lbind_type(result, 0) == LT_INTEGER);
 	// printf("sizeof 'foobar' = %d\n", lbind_tointeger(result, 0));
+
+
+	/* push functions and arguments */
+	// lua_getglobal(L, "onPacket");							 /* function to be called */
+	// lua_pushlstring(L, (const char *)payload, payload_size); /* push 1st argument */
+	// if (report(L, lua_pcall(L, 1, 0, 0)) != LUA_OK)			 /* do the call (1 arguments, 0 result) */
+	// {
+	// 	return;
+	// }
+
+	// if (!lua_isnumber(L, -1)) /* retrieve result */
+	// {
+	// 	error(L, "function `f' must return a number");
+	// }
+	// double z = lua_tonumber(L, -1);
+	// lua_pop(L, 1); /* pop returned value */	
 }
 
 // success 1 fail 0
 static int pmain(lua_State *L)
 {
-	// int argc = (int)lua_tointeger(L, 1);
-	// char **argv = (char **)lua_touserdata(L, 2);
-	
+	int argc = (int)lua_tointeger(L, 1);
+	char **argv = (char **)lua_touserdata(L, 2);
+
 	// 注册函数
 	lbind_register(L, "sniffExit", sniffexit);
 
@@ -105,7 +108,7 @@ static int pmain(lua_State *L)
 int main(int argc, char **argv)
 {
 	int status, result;
-	lua_State *L = luaL_newstate(); /* create state */
+	L = luaL_newstate(); /* create state */
 	if (L == NULL)
 	{
 		l_message(argv[0], "cannot create state: not enough memory");

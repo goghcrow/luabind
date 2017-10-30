@@ -3,6 +3,8 @@
 
 #include <lua.h>
 
+// https://blog.codingnow.com/2015/05/lua_c_api.html
+
 #define LF_NOTFOUND 1
 #define LF_ERRPARSE 2
 #define LF_ERRRUN 3

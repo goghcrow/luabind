@@ -1,6 +1,6 @@
-print "init\n"
+print "Starting...\n"
 
-function onPacket(tbl, str)
+function onPacket(tbl)
 	print(tbl)
 	-- C.sniffExit()
 	-- return #pcapdata
