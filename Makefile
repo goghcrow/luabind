@@ -1,6 +1,6 @@
 DEBUG := -fsanitize=address -fno-omit-frame-pointer
 
-LLIB := -Wl,-rpath,./lib/lua5.3 -L./lib/lua5.3
+LLIB := -I./include/lua5.3 -L./lib/lua5.3 -Wl,-rpath,./lib/lua5.3 -lm -ldl
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
@@ -11,13 +11,13 @@ ifeq ($(UNAME_S),Darwin)
 endif
 	
 tcpsniff: sniff.c tcpsniff.c luabind.c 
-	gcc -g -Wall -o $@ $^ -I./include -L./lib -lpcap $(LLIB)
+	gcc -g -Wall -o $@ $^ $(LLIB) -lpcap
 
 tcpsniff-debug: sniff.c tcpsniff.c luabind.c 
-	gcc $(DEBUG) -g -Wall -o $@ $^ -I./include -L./lib -llua -lpcap $(LLIB)
+	gcc $(DEBUG) -g -Wall -o $@ $^  $(LLIB) -lpcap
 
 test: test.c luabind.c
-	gcc -g -Wall -o $@ $^ -I./include -L./lib -llua
+	gcc -g -Wall -o $@ $^ $(LLIB)
 
 clean:
 	rm -f test
