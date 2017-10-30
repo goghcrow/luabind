@@ -1,4 +1,4 @@
--- print "Hello World"
+print "init\n"
 
 function onPacket(tbl, str)
 	print(tbl)

@@ -46,18 +46,18 @@ void pkt_handler(void *ud,
 {
 	printf("%ld len %d, caplen %d \n", pkthdr->ts.tv_sec, pkthdr->len, pkthdr->caplen);
 
-	L = luaL_newstate(); /* create state */
-	assert(L);
-	luaL_openlibs(L);
+	// L = luaL_newstate(); /* create state */
+	// assert(L);
+	// luaL_openlibs(L);
 	
-	// 注册函数
-	lbind_register(L, "sniffExit", sniffexit);
+	// // 注册函数
+	// lbind_register(L, "sniffExit", sniffexit);
 
-	// 加载文件并执行
-	if (lbind_dofile(L, "tcpsniff.lua") != LUA_OK)
-	{
-		exit(1);
-	}
+	// // 加载文件并执行
+	// if (lbind_dofile(L, "tcpsniff.lua") != LUA_OK)
+	// {
+	// 	exit(1);
+	// }
 
 	struct vars *args = lbind_args(L);
 	// lbind_pushstring(args, "foobar");
@@ -74,6 +74,15 @@ static int pmain(lua_State *L)
 {
 	// int argc = (int)lua_tointeger(L, 1);
 	// char **argv = (char **)lua_touserdata(L, 2);
+	
+	// 注册函数
+	lbind_register(L, "sniffExit", sniffexit);
+
+	// 加载文件并执行
+	if (lbind_dofile(L, "tcpsniff.lua") != LUA_OK)
+	{
+		exit(1);
+	}
 
 	struct tcpsniff_opt sniff_opt = {
 		.snaplen = 65535,
