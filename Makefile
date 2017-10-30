@@ -1,6 +1,6 @@
 DEBUG := -fsanitize=address -fno-omit-frame-pointer
 
-LLIB := -Wl,-rpath,./lib -L./lib
+LLIB := -Wl,-rpath,./lib/lua5.3 -L./lib/lua5.3
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
