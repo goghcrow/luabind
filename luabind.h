@@ -34,10 +34,12 @@ double lbind_toreal(struct vars *v, int index);
 const char *lbind_tostring(struct vars *v, int index);
 int lbind_toboolean(struct vars *v, int index);
 void *lbind_topointer(struct vars *v, int index);
+// struct vars *lbind_tomap(struct vars *v, int index); // todo
 
 // int lbind_openarray(struct vars *v); // todo
-// int lbind_openmap(struct vars *v);   // todo
-// int lbind_close(struct vars *v);     // todo
+int lbind_openmap(struct vars *v); // 支持嵌套 open close
+int lbind_close(struct vars *v);
+int lbind_pushmap(struct vars *v, struct vars **m);
 int lbind_pushinteger(struct vars *v, int i);
 int lbind_pushreal(struct vars *v, double f);
 int lbind_pushstring(struct vars *v, const char *s);

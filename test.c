@@ -7,26 +7,29 @@
 #include "luabind.h"
 
 static void
-foobar(struct vars *input, struct vars *output) {
-	assert(lbind_type(input, 0) == LT_INTEGER);
-	int a = lbind_tointeger(input, 0);
-	lbind_pushinteger(output, a*2);
+foobar(struct vars *input, struct vars *output)
+{
+    assert(lbind_type(input, 0) == LT_INTEGER);
+    int a = lbind_tointeger(input, 0);
+    lbind_pushinteger(output, a * 2);
 }
 
-int
-main() {
-	lua_State *L = luaL_newstate();
+int main()
+{
+    lua_State *L = luaL_newstate();
     assert(L);
-	luaL_openlibs(L);
-	lbind_register(L, "double", foobar);
-	lbind_dofile(L, "test.lua");
+    luaL_openlibs(L);
+    lbind_register(L, "double", foobar);
+    lbind_dofile(L, "test.lua");
 
-    struct vars * args = lbind_args(L);
+    struct vars *args = lbind_args(L);
     lbind_pushstring(args, "foobar");
-    struct vars * result = lbind_call(L, "hello", args);
+    struct vars *result = lbind_call(L, "hello", args);
     lbind_clear(args);
     assert(lbind_type(result, 0) == LT_INTEGER);
     printf("sizeof 'foobar' = %d\n", lbind_tointeger(result, 0));
+
+    /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
     lbind_pushnil(args);
     lbind_pushpointer(args, L);
@@ -43,11 +46,37 @@ main() {
     assert(lbind_type(result, 4) == LT_INTEGER);
     assert(lbind_type(result, 5) == LT_STRING);
 
+    /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
+
     lbind_openmap(args);
+    lbind_pushstring(args, "name");
+    lbind_pushstring(args, "xiaofeng");
+    lbind_pushstring(args, "id");
+    lbind_pushinteger(args, 42);
+    lbind_pushstring(args, "subtbl");
+    {
+        lbind_openmap(args);
+        lbind_pushstring(args, "name");
+        lbind_pushstring(args, "xiaofeng");
+        lbind_pushstring(args, "id");
+        lbind_pushinteger(args, 42);
+
+        lbind_pushstring(args, "subtbl");
+        {
+            lbind_openmap(args);
+            lbind_pushstring(args, "name");
+            lbind_pushstring(args, "xiaofeng");
+            lbind_pushstring(args, "id");
+            lbind_pushinteger(args, 42);
+            lbind_close(args);
+        }
+        lbind_close(args);        
+    }
+
     lbind_close(args);
-    
+    result = lbind_call(L, "nestedtbl", args);
+    lbind_clear(args);
 
-	lua_close(L);
-	return 0;
+    lua_close(L);
+    return 0;
 }
-

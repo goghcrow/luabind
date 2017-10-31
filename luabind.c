@@ -5,24 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 struct llstr
 {
 	const char *s;
 	size_t sz;
 };
-
-// struct larray
-// {
-// 	int n;
-// 	struct lvar *v;
-// };
-
-// struct lmap
-// {
-// 	int n;
-// 	struct lvar *v;
-// };
 
 struct lvar
 {
@@ -36,8 +25,7 @@ struct lvar
 		void *p;
 		// struct larray *a;
 		// struct lmap *m;
-		// struct vars *a;
-		// struct vars *m;
+		struct vars *m;
 	} v;
 };
 
@@ -46,6 +34,8 @@ struct vars
 	int n;
 	int cap;
 	struct lvar *v;
+
+	struct vars *prev;
 };
 
 struct vars *
@@ -57,6 +47,7 @@ lbind_new()
 	v->n = 0;
 	v->cap = 0;
 	v->v = NULL;
+	v->prev = NULL;
 	return v;
 }
 
@@ -168,41 +159,56 @@ newvalue(struct vars *v)
 	return ret;
 }
 
-// todo
-// int lbind_pusharray(struct vars *v, struct vars **a)
-// int lbind_openarray(struct vars *v, struct vars **a)
-// {
-// 	struct lvar *s = newvalue(v);
-// 	if (s == NULL)
-// 		return -1;
-// 	s->type = LT_ARRAY;
-// 	s->v.a = lbind_new();
-// 	if (s->v.a == NULL)
-// 		return -1;
-// 	*a = s->v.a;
-// 	return 0;
-// }
+int lbind_openmap(struct vars *v)
+{
+	// fixme !!! free
+	struct vars *cpy = lbind_new();
+	if (cpy == NULL)
+		return -1;
+	memcpy(cpy, v, sizeof(*v));
+	v->prev = cpy;
+	v->n = 0;
+	v->cap = 0;
+	v->v = NULL;
+	return 0;
+}
 
-// todo
-// int lbind_pushmap(struct vars *v, struct vars **m)
-// int lbind_openmap(struct vars *v, struct vars **m)
-// {
-// 	struct lvar *s = newvalue(v);
-// 	if (s == NULL)
-// 		return -1;
-// 	s->type = LT_MAP;
-// 	s->v.m = lbind_new();
-// 	if (s->v.m == NULL)
-// 		return -1;
-// 	*m = s->v.m;
-// 	return 0;
-// }
+int lbind_close(struct vars *v)
+{
+	struct vars *prev = v->prev;
+	if (prev == NULL)
+	{
+		return -1;
+	}
 
-// todo
-// int lbind_close(struct vars *v)
-// {
-// 	return -1;
-// }
+	// fixme !!! free
+	struct vars *cpy = lbind_new();
+	if (cpy == NULL)
+		return -1;
+	memcpy(cpy, v, sizeof(*v));
+	struct lvar *m = newvalue(prev);
+	if (m == NULL)
+		return -1;
+	m->type = LT_MAP;
+	m->v.m = cpy;
+	m->v.m->prev = NULL;
+	memcpy(v, prev, sizeof(*v));
+	return 0;
+}
+
+// fixme
+int lbind_pushmap(struct vars *v, struct vars **m)
+{
+	struct lvar *s = newvalue(v);
+	if (s == NULL)
+		return -1;
+	s->type = LT_MAP;
+	s->v.m = lbind_new();
+	if (s->v.m == NULL)
+		return -1;
+	*m = s->v.m;
+	return 0;
+}
 
 int lbind_pushinteger(struct vars *v, int i)
 {
@@ -345,6 +351,62 @@ newvarsobject(lua_State *L)
 	return v;
 }
 
+static void
+pushvar(lua_State *L, struct lvar *v)
+{
+	switch (v->type)
+	{
+	case LT_NIL:
+		lua_pushnil(L);
+		break;
+	case LT_INTEGER:
+		lua_pushinteger(L, v->v.i);
+		break;
+	case LT_REAL:
+		lua_pushnumber(L, v->v.f);
+		break;
+	case LT_STRING:
+		lua_pushstring(L, v->v.s);
+		break;
+	case LT_LSTRING:
+		// const char *lua_pushlstring (lua_State *L, const char *s, size_t len);
+		// 把指针 s 指向的长度为 len 的字符串压栈。
+		// Lua 对这个字符串做一个内部副本（或是复用一个副本）， 因此 s 处的内存在函数返回后，可以释放掉或是立刻重用于其它用途。
+		// 字符串内可以是任意二进制数据，包括零字符。
+		// 返回内部副本的指针。
+		lua_pushlstring(L, v->v.ls->s, v->v.ls->sz);
+		free(v->v.ls);
+		break;
+	case LT_BOOLEAN:
+		lua_pushboolean(L, v->v.b);
+		break;
+	case LT_POINTER:
+		lua_pushlightuserdata(L, v->v.p);
+		break;
+	case LT_ARRAY: //todo
+	case LT_MAP:
+	{
+		struct vars *m = v->v.m;
+		int j, n = m->n;
+		if ((n % 2) != 0)
+		{
+			luaL_error(L, "no matched kv pairs in map");
+		}
+		lua_newtable(L);
+		for (j = 0; j < n; j += 2)
+		{
+			pushvar(L, &m->v[j]);
+			pushvar(L, &m->v[j + 1]);
+			lua_settable(L, -3);
+		}
+		lbind_clear(m);
+		break;
+	}
+	default:
+		luaL_error(L, "unsupport type %d", v->type);
+	}
+}
+
 // v -> lua stack
 static int
 pushargs(lua_State *L, struct vars *vars)
@@ -357,47 +419,7 @@ pushargs(lua_State *L, struct vars *vars)
 	for (i = 0; i < n; i++)
 	{
 		struct lvar *v = &vars->v[i];
-		switch (v->type)
-		{
-		case LT_NIL:
-			lua_pushnil(L);
-			break;
-		case LT_INTEGER:
-			lua_pushinteger(L, v->v.i);
-			break;
-		case LT_REAL:
-			lua_pushnumber(L, v->v.f);
-			break;
-		case LT_STRING:
-			lua_pushstring(L, v->v.s);
-			break;
-		case LT_LSTRING:
-			// const char *lua_pushlstring (lua_State *L, const char *s, size_t len);
-			// 把指针 s 指向的长度为 len 的字符串压栈。
-			// Lua 对这个字符串做一个内部副本（或是复用一个副本）， 因此 s 处的内存在函数返回后，可以释放掉或是立刻重用于其它用途。
-			// 字符串内可以是任意二进制数据，包括零字符。
-			// 返回内部副本的指针。
-			lua_pushlstring(L, v->v.ls->s, v->v.ls->sz);
-			free(v->v.ls);
-			break;
-		case LT_BOOLEAN:
-			lua_pushboolean(L, v->v.b);
-			break;
-		case LT_POINTER:
-			lua_pushlightuserdata(L, v->v.p);
-			break;
-		case LT_ARRAY: //todo
-		case LT_MAP:   //todo
-		{
-			// struct vars *m = v->v.m;
-			// int j;
-			// for (j = 0; j < m->n; j++)
-			// {
-			// }
-		}
-		default:
-			luaL_error(L, "unsupport type %d", v->type);
-		}
+		pushvar(L, v);
 	}
 	return n;
 }

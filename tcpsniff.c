@@ -44,11 +44,50 @@ void pkt_handler(void *ud,
 {
 	printf("%ld len %d, caplen %d \n", pkthdr->ts.tv_sec, pkthdr->len, pkthdr->caplen); // todo
 
+	// char s_pkthdr[100];
+	// memset(s_pkthdr, 0, sizeof(s_pkthdr));
+	// snprintf(s_pkthdr, 100, "%ld,%d,%d,%d", pkthdr->ts.tv_sec, pkthdr->ts.tv_usec, pkthdr->caplen, pkthdr->len);
+	// lbind_pushstring(args, (const char *)s_pkthdr);
+
 	lua_State *L = (lua_State *)ud;
+
 	struct vars *args = lbind_args(L);
+	
+	lbind_openmap(args);
+	lbind_pushstring(args, "caplen");
+	lbind_pushinteger(args, pkthdr->caplen);
+	lbind_pushstring(args, "len");
+	lbind_pushinteger(args, pkthdr->len);
+	lbind_pushstring(args, "ts");
+	lbind_pushreal(args, (double)(pkthdr->ts.tv_sec) + (double)(pkthdr->ts.tv_usec) / 1000000.0);
+
+	lbind_pushstring(args, "tbl");
+	
+	lbind_openmap(args);
+	lbind_pushstring(args, "caplen");
+	lbind_pushinteger(args, pkthdr->caplen);
+	lbind_close(args);
+
+	lbind_close(args);
 	lbind_pushlstring(args, (const char *)payload, payload_size);
 	lbind_call(L, "tcpsniff_onPacket", args);
 	lbind_clear(args);
+
+	// struct vars *args = lbind_args(L);
+
+	// struct vars *m = NULL;
+	// lbind_pushmap(args, &m);
+
+	// lbind_pushstring(m, "caplen");
+	// lbind_pushinteger(m, pkthdr->caplen);
+	// lbind_pushstring(m, "len");
+	// lbind_pushinteger(m, pkthdr->len);
+	// lbind_pushstring(m, "ts");
+	// lbind_pushreal(m, (double)(pkthdr->ts.tv_sec) + (double)(pkthdr->ts.tv_usec) / 1000000.0);
+
+	// lbind_pushlstring(args, (const char *)payload, payload_size);
+	// lbind_call(L, "tcpsniff_onPacket", args);
+	// lbind_clear(args);
 }
 
 static void loadconf(lua_State *L, char **interface, char **exp)
