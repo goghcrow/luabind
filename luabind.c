@@ -12,13 +12,17 @@ struct llstr
 	size_t sz;
 };
 
-struct larray
-{
-};
+// struct larray
+// {
+// 	int n;
+// 	struct lvar *v;
+// };
 
-struct lmap
-{
-};
+// struct lmap
+// {
+// 	int n;
+// 	struct lvar *v;
+// };
 
 struct lvar
 {
@@ -30,8 +34,10 @@ struct lvar
 		struct llstr *ls;
 		int b;
 		void *p;
-		struct larray *a;
-		struct lmap *m;
+		// struct larray *a;
+		// struct lmap *m;
+		// struct vars *a;
+		// struct vars *m;
 	} v;
 };
 
@@ -162,6 +168,42 @@ newvalue(struct vars *v)
 	return ret;
 }
 
+// todo
+// int lbind_pusharray(struct vars *v, struct vars **a)
+// int lbind_openarray(struct vars *v, struct vars **a)
+// {
+// 	struct lvar *s = newvalue(v);
+// 	if (s == NULL)
+// 		return -1;
+// 	s->type = LT_ARRAY;
+// 	s->v.a = lbind_new();
+// 	if (s->v.a == NULL)
+// 		return -1;
+// 	*a = s->v.a;
+// 	return 0;
+// }
+
+// todo
+// int lbind_pushmap(struct vars *v, struct vars **m)
+// int lbind_openmap(struct vars *v, struct vars **m)
+// {
+// 	struct lvar *s = newvalue(v);
+// 	if (s == NULL)
+// 		return -1;
+// 	s->type = LT_MAP;
+// 	s->v.m = lbind_new();
+// 	if (s->v.m == NULL)
+// 		return -1;
+// 	*m = s->v.m;
+// 	return 0;
+// }
+
+// todo
+// int lbind_close(struct vars *v)
+// {
+// 	return -1;
+// }
+
 int lbind_pushinteger(struct vars *v, int i)
 {
 	struct lvar *s = newvalue(v);
@@ -285,7 +327,7 @@ newvarsobject(lua_State *L)
 		// 将一个 C 函数压栈。 这个函数接收一个 C 函数指针， 并将一个类型为 function 的 Lua 值压栈。 当这个栈顶的值被调用时，将触发对应的 C 函数。
 		// 注册到 Lua 中的任何函数都必须遵循正确的协议来接收参数和返回值 （参见 lua_CFunction ）。
 		// lua_pushcfunction 是作为一个宏定义出现的：
-	    // #define lua_pushcfunction(L,f)  lua_pushcclosure(L,f,0)
+		// #define lua_pushcfunction(L,f)  lua_pushcclosure(L,f,0)
 		lua_pushcfunction(L, ldelvars); // -2
 		// void lua_setfield (lua_State *L, int index, const char *k);
 		// 做一个等价于 t[k] = v 的操作， 这里 t 是给出的索引处的值， 而 v 是栈顶的那个值。
@@ -331,7 +373,7 @@ pushargs(lua_State *L, struct vars *vars)
 			break;
 		case LT_LSTRING:
 			// const char *lua_pushlstring (lua_State *L, const char *s, size_t len);
-			// 把指针 s 指向的长度为 len 的字符串压栈。 
+			// 把指针 s 指向的长度为 len 的字符串压栈。
 			// Lua 对这个字符串做一个内部副本（或是复用一个副本）， 因此 s 处的内存在函数返回后，可以释放掉或是立刻重用于其它用途。
 			// 字符串内可以是任意二进制数据，包括零字符。
 			// 返回内部副本的指针。
@@ -346,6 +388,13 @@ pushargs(lua_State *L, struct vars *vars)
 			break;
 		case LT_ARRAY: //todo
 		case LT_MAP:   //todo
+		{
+			// struct vars *m = v->v.m;
+			// int j;
+			// for (j = 0; j < m->n; j++)
+			// {
+			// }
+		}
 		default:
 			luaL_error(L, "unsupport type %d", v->type);
 		}
@@ -515,8 +564,10 @@ lcall(lua_State *L)
 	}
 	lua_call(L, pushargs(L, args), LUA_MULTRET);
 	luaL_checkstack(L, LUA_MINSTACK, NULL);
+	// 以下两行, 将多返回值转换为 struct args
 	args = resultvars(L);
 	genargs(L, args);
+	// 将返回值ptr入栈
 	lua_pushlightuserdata(L, args);
 	return 1;
 }

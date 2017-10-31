@@ -24,20 +24,20 @@
 
 struct vars;
 
-struct vars * lbind_new();
+struct vars *lbind_new();
 void lbind_delete(struct vars *v);
 void lbind_clear(struct vars *v);
 
 int lbind_type(struct vars *v, int index);
 int lbind_tointeger(struct vars *v, int index);
 double lbind_toreal(struct vars *v, int index);
-const char * lbind_tostring(struct vars *v, int index);
+const char *lbind_tostring(struct vars *v, int index);
 int lbind_toboolean(struct vars *v, int index);
-void * lbind_topointer(struct vars *v, int index);
+void *lbind_topointer(struct vars *v, int index);
 
-//int lbind_openarray(struct vars *v);
-//int lbind_openmap(struct vars *v);
-//int lbind_close(struct vars *v);
+// int lbind_openarray(struct vars *v); // todo
+// int lbind_openmap(struct vars *v);   // todo
+// int lbind_close(struct vars *v);     // todo
 int lbind_pushinteger(struct vars *v, int i);
 int lbind_pushreal(struct vars *v, double f);
 int lbind_pushstring(struct vars *v, const char *s);
@@ -46,11 +46,11 @@ int lbind_pushboolean(struct vars *v, int b);
 int lbind_pushnil(struct vars *v);
 int lbind_pushpointer(struct vars *v, void *p);
 
-typedef void (*lbind_function)(struct vars *input , struct vars *output);
+typedef void (*lbind_function)(struct vars *input, struct vars *output);
 
-struct vars * lbind_args(lua_State *L);
-struct vars * lbind_call(lua_State *L, const char * funcname, struct vars *args);
-void lbind_register(lua_State *L, const char * funcname, lbind_function f);
-int lbind_dofile(lua_State *L, const char * filename);
+struct vars *lbind_args(lua_State *L);
+struct vars *lbind_call(lua_State *L, const char *funcname, struct vars *args);
+void lbind_register(lua_State *L, const char *funcname, lbind_function f);
+int lbind_dofile(lua_State *L, const char *filename);
 
 #endif

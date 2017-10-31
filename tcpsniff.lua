@@ -1,7 +1,14 @@
 print "Starting...\n"
 
-function onPacket(tbl)
+function tcpsniff_interface()
+    return "any"
+end
+
+function tcpsniff_expression()
+    return "tcp and dst port 80"
+end
+
+function tcpsniff_onPacket(tbl)
 	print(tbl)
-	-- C.sniffExit()
-	-- return #pcapdata
+	-- C.tcpsniff_stop()
 end
