@@ -22,5 +22,5 @@ function nestedtbl(tbl)
     print("tbl.subtbl.subtbl.name=", tbl.subtbl.subtbl.name)
     print("tbl.subtbl.subtbl.id=", tbl.subtbl.subtbl.id)
 
-    return tbl
+    -- return tbl
 end
