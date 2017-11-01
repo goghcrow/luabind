@@ -194,7 +194,7 @@ int lbind_close(struct vars *v)
 	m->v.m = cpy;
 	m->v.m->prev = NULL;
 	memcpy(v, prev, sizeof(*v));
-	// free(prev); // free 关系: lbind_openmap -> lbind_new
+	free(prev); // free 关系: lbind_openmap -> lbind_new
 	return 0;
 }
 
@@ -402,7 +402,7 @@ pushvar(lua_State *L, struct lvar *v)
 			lua_settable(L, -3);
 		}
 		lbind_clear(m);
-		// lbind_delete(m); // free 关系: lbind_close -> lbind_new
+		lbind_delete(m); // free 关系: lbind_close -> lbind_new
 		break;
 	}
 	default:

@@ -1,12 +1,32 @@
-local totable = string.ToTable
-local string_sub = string.sub
-local string_find = string.find
-local string_len = string.len
+local date = os.date
+local tointeger = math.tointeger
+local sprintf = string.format
+local tinsert = table.insert
+local tconcat = table.concat
 
-print "Starting...\n"
+local TH_FIN = 0x01
+local TH_SYN = 0x02
+local TH_RST = 0x04
+local TH_PUSH = 0x08
+local TH_ACK = 0x10
+local TH_URG = 0x20
+
+
+print "Sniffing...\n"
+
+local function ip2long(ip)
+    local a,b,c,d = ip:match("(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)%.(%d%d?%d?)")
+	return tointeger((a << 24) + (b << 16) + (c << 8) + d)
+end
+
+local function long2ip(long)
+	return ((long & 0xff000000) >> 24) .. "." .. ((long & 0xff0000) >> 16) .."." .. ((long & 0xff00) >> 8) .."." .. (long & 0xff)
+end
+
+
 
 function tcpsniff_interface()
-    return "any"
+    return "en0"
 end
 
 function tcpsniff_expression()
@@ -14,21 +34,40 @@ function tcpsniff_expression()
 end
 
 function tcpsniff_onPacket(pcap, ip, tcp, tcpopt, data)
-	print_r(pcap)
-	print()
-	
-	print_r(ip)
-	print()
-	
-	print_r(tcp)
-	print()
+	local time = date("%X", tointeger(pcap.ts))
+	local src = long2ip(ip.src) .. ":" .. tcp.sport
+	local dst = long2ip(ip.dst) .. ":" .. tcp.dport
 
-	print_r(tcpopt)
-	print()
+	local flagstbl = {}
+	local flags = tcp.flags
 
-	print(data)
-	C.tcpsniff_stop()
+	if (flags & TH_SYN) ~= 0 then
+		tinsert(flagstbl, "SYN")
+	end
+	if (flags & TH_ACK) ~= 0 then
+		tinsert(flagstbl, "ACK")
+	end
+	if (flags & TH_PUSH) ~= 0 then
+		tinsert(flagstbl, "PSH")
+	end
+	if (flags & TH_FIN) ~= 0 then
+		tinsert(flagstbl, "FIN")
+	end
+	if (flags & TH_RST) ~= 0 then
+		tinsert(flagstbl, "RST")
+	end
+
+	flags = tconcat(flagstbl, " ")
+	local win = tcp.win * (2 ^ tcpopt.snd_wscale)
+	local len = #data
+	print(sprintf("%s %s -> %s %s seq %d, ack %d, win %u, pktlen %u, len %u\n", time, src, dst, flags, tcp.seq, tcp.ack, win, pcap.len, len))
+	if len > 0 then
+		print(data)
+	end
+
+	-- C.tcpsniff_stop()
 end
+
 
 
 

@@ -168,9 +168,9 @@ static void pkt_handler(void *ud,
 	lbind_pushstring(args, "sum");
 	lbind_pushinteger(args, ntohs(iphdr->ip_sum));
 	lbind_pushstring(args, "dst");
-	lbind_pushinteger(args, ntohl(iphdr->ip_dst.s_addr));
+	lbind_pushreal(args, ntohl(iphdr->ip_dst.s_addr));
 	lbind_pushstring(args, "src");
-	lbind_pushinteger(args, ntohl(iphdr->ip_src.s_addr));
+	lbind_pushreal(args, ntohl(iphdr->ip_src.s_addr));
 	lbind_close(args);
 
 	lbind_openmap(args);
@@ -179,9 +179,9 @@ static void pkt_handler(void *ud,
 	lbind_pushstring(args, "dport");
 	lbind_pushinteger(args,  ntohs(tcphdr->th_dport));
 	lbind_pushstring(args, "seq");
-	lbind_pushinteger(args,  (unsigned long)ntohl(tcphdr->th_seq));
+	lbind_pushreal(args,  (unsigned long)ntohl(tcphdr->th_seq));
 	lbind_pushstring(args, "ack");
-	lbind_pushinteger(args,  (unsigned long)ntohl(tcphdr->th_ack));
+	lbind_pushreal(args,  (unsigned long)ntohl(tcphdr->th_ack));
 	lbind_pushstring(args, "off");
 	lbind_pushinteger(args,  tcphdr->th_off);
 	lbind_pushstring(args, "flags");
